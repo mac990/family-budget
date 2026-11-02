@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#2d6cdf">
+<title>家庭還款管理 v4</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:#f3f5f9;color:#222;padding-bottom:60px}
+  header{background:#2d6cdf;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:10}
+  header h1{font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  header button{background:#fff3;border:none;color:#fff;font-size:15px;padding:4px 10px;border-radius:6px;cursor:pointer}
+  .sync{font-size:11px;padding:2px 8px;border-radius:10px;background:#fff3}.sync.ok{background:#1a8f4a}.sync.err{background:#d0342c}.sync.busy{background:#d97706}
+  .monthbar{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px}
+  .monthbar button{font-size:20px;width:34px;height:34px;border-radius:50%;padding:0}
+  .monthbar input{font-size:16px;padding:4px 8px;border:none;border-radius:6px}
+  .mebar{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:6px;font-size:13px;flex-wrap:wrap}
+  .mebar select{padding:3px 6px;border-radius:6px;border:none;font-size:14px}
+  main{padding:12px;max-width:960px;margin:0 auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin-bottom:12px}
+  .card{background:#fff;border-radius:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .card .lbl{font-size:12px;color:#777}.card .val{font-size:18px;font-weight:700;margin-top:3px}
+  .pos{color:#1a8f4a}.neg{color:#d0342c}
+  .bar{height:7px;background:#e6e9ef;border-radius:4px;overflow:hidden;margin-top:6px}.bar div{height:100%;background:#1a8f4a}
+  .tabs{display:flex;background:#fff;border-radius:10px;overflow:auto;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .tabs button{flex:1;border:none;background:none;padding:10px 6px;font-size:13px;cursor:pointer;color:#555;white-space:nowrap}
+  .tabs button.on{background:#2d6cdf;color:#fff;font-weight:700}
+  .page{display:none}.page.on{display:block}
+  section{background:#fff;border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  section h2{font-size:15px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  section h3{font-size:14px;margin:10px 0 6px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:6px 4px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle}
+  th{font-size:12px;color:#666;white-space:nowrap}
+  input[type=text],input[type=number],input[type=month],input[type=password],select{padding:5px 6px;border:1px solid #ddd;border-radius:5px;font-size:14px;width:100%}
+  input[type=number]{text-align:right}input[type=checkbox]{width:20px;height:20px}
+  .r{text-align:right;white-space:nowrap}
+  .btn{border:none;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;background:#2d6cdf;color:#fff;text-decoration:none;display:inline-block}
+  .btn.gray{background:#888}.btn.red{background:#d0342c}.btn.green{background:#1a8f4a}.btn.line{background:#06c755}.btn.sm{padding:3px 8px;font-size:12px}
+  .paid{background:#f0faf3;color:#888}.paid .nm{text-decoration:line-through}
+  .tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;color:#fff;white-space:nowrap;background:#888}
+  .tag.s{background:#d0342c}.tag.o{background:#2d6cdf}.tag.c{background:#7c3aed}.tag.p{background:#d97706}
+  .own{display:inline-block;font-size:11px;padding:1px 6px;border-radius:10px;background:#eef2ff;color:#3730a3;margin-left:4px;white-space:nowrap}
+  .own.me{background:#dcfce7;color:#166534}
+  .day{display:inline-block;min-width:34px;text-align:center;font-size:12px;padding:2px 4px;border-radius:5px;background:#eef;color:#334}
+  .day.late{background:#fde2e2;color:#b91c1c;font-weight:700}.day.soon{background:#fef3c7;color:#92400e;font-weight:700}
+  .tip{font-size:12px;color:#666;margin-top:8px;line-height:1.6}
+  .filter{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .filter button{border:1px solid #ccc;background:#fff;border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .filter button.on{background:#2d6cdf;color:#fff;border-color:#2d6cdf}
+  textarea{width:100%;min-height:60px;border:1px solid #ddd;border-radius:6px;padding:8px;font-size:13px;font-family:inherit}
+  .alert{background:#fff7ed;border-left:4px solid #d97706;padding:8px 10px;border-radius:6px;font-size:13px;margin-bottom:8px}
+  .alert.red{background:#fef2f2;border-color:#d0342c}.alert.blue{background:#eff6ff;border-color:#2d6cdf}
+  .footer{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  details summary{cursor:pointer;font-size:14px;font-weight:600;padding:6px 0}
+  canvas{width:100%;height:auto;display:block}
+  .calc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.calc label{font-size:13px;color:#555}
+  .res{background:#f8fafc;border-radius:8px;padding:10px;font-size:13px;line-height:1.7}
+  ol{padding-left:20px;font-size:13px;line-height:1.7}
+  #lock{position:fixed;inset:0;background:#2d6cdf;z-index:100;display:none;align-items:center;justify-content:center}
+  #lock .box{background:#fff;color:#222;border-radius:14px;padding:24px;width:280px;text-align:center}
+  #lock input{font-size:28px;text-align:center;letter-spacing:8px;margin:12px 0}
+  @media(max-width:640px){.hide-m{display:none}.calc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="lock"><div class="box"><div style="font-size:40px">🔒</div><b>請輸入 PIN</b>
+  <input type="password" id="pinIn" inputmode="numeric" maxlength="6" onkeydown="if(event.key==='Enter')unlock()">
+  <button class="btn" style="width:100%" onclick="unlock()">解鎖</button><div id="pinErr" style="color:#d0342c;font-size:13px;margin-top:8px;min-height:18px"></div></div></div>
+
+<header>
+  <h1><span>家庭還款管理 <small style="opacity:.7">v4</small></span><span><span class="sync" id="sync">未連線</span> <button id="lockBtn" onclick="lock()">🔒</button></span></h1>
+  <div class="monthbar"><button onclick="shiftMonth(-1)">‹</button><input type="month" id="month" onchange="render()"><button onclick="shiftMonth(1)">›</button></div>
+  <div class="mebar">我是：<select id="meSel" onchange="setMe(this.value)"></select><label><input type="checkbox" id="mineOnly" onchange="render()" style="width:16px;height:16px;vertical-align:middle"> 只看我負擔的</label></div>
+</header>
+<main>
+  <div id="alerts"></div>
+  <div class="cards">
+    <div class="card"><div class="lbl">本月收入（實際）</div><div class="val" id="cInc">0</div></div>
+    <div class="card"><div class="lbl">本月應繳（含罰單分期）</div><div class="val" id="cDue">0</div></div>
+    <div class="card"><div class="lbl">本月結餘</div><div class="val" id="cBal">0</div></div>
+    <div class="card"><div class="lbl">已繳進度</div><div class="val" id="cPaid">0 / 0</div><div class="bar"><div id="cBar"></div></div></div>
+    <div class="card"><div class="lbl">罰單尚欠</div><div class="val neg" id="cFine">0</div><div class="bar"><div id="fBar"></div></div></div>
+    <div class="card"><div class="lbl">總債務（本金＋罰單）</div><div class="val" id="cTotal">0</div></div>
+  </div>
+  <div class="tabs">
+    <button class="on" onclick="tab(0,this)">本月待辦</button><button onclick="tab(1,this)">債務總表</button><button onclick="tab(2,this)">交通罰單</button>
+    <button onclick="tab(3,this)">趨勢</button><button onclick="tab(4,this)">歷史</button><button onclick="tab(5,this)">家庭／設定</button>
+  </div>
+
+  <div class="page on" id="p0">
+    <section><h2>待繳（依繳款日排序） <span id="todoCnt" style="font-size:12px;color:#666"></span></h2>
+      <table><thead><tr><th style="width:34px"></th><th style="width:52px">日</th><th>項目</th><th style="width:120px">本月實繳</th></tr></thead><tbody id="todoBody"></tbody></table>
+      <div class="tip">金額可先改再勾選（例如電費）。勾選時會記錄「誰、何時」繳的，全家同步看得到。</div></section>
+    <section><details><summary>已繳項目 <span id="doneCnt" style="color:#666;font-weight:400"></span></summary><table><tbody id="doneBody"></tbody></table></details></section>
+    <section><h2>本月收入（實際入帳）</h2><table><thead><tr><th>來源</th><th style="width:120px">本月金額</th><th class="hide-m" style="width:80px">負擔人</th></tr></thead><tbody id="incBody"></tbody></table></section>
+    <section><h2>分攤摘要</h2><table><thead><tr><th>成員</th><th class="r">收入</th><th class="r">負擔</th><th class="r">淨額</th></tr></thead><tbody id="ownerBody"></tbody></table></section>
+    <section><h2>LINE 月報 <button class="btn sm" onclick="makeReport()">產生月報</button></h2>
+      <textarea id="report" style="min-height:150px" placeholder="按「產生月報」後可直接貼到 LINE 家庭群組"></textarea>
+      <div class="footer"><button class="btn gray" onclick="copyReport()">複製文字</button><a class="btn line" id="lineLink" href="#" target="_blank" onclick="return openLine()">分享到 LINE</a><button class="btn" id="shareBtn" onclick="shareReport()" style="display:none">系統分享</button></div></section>
+    <section><h2>本月備註</h2><textarea id="note" placeholder="例如：已向執行署申請分期；電費本月 2,860…" onchange="setNote(this.value)"></textarea></section>
+  </div>
+
+  <div class="page" id="p1">
+    <section><h2>債務總表（依利率高→低）</h2>
+      <table><thead><tr><th>貸款</th><th class="r">月付</th><th class="r">剩餘本金</th><th class="r hide-m">利率%</th><th class="r hide-m">月利息</th><th class="r">剩餘期</th><th>預估清償</th></tr></thead><tbody id="debtBody"></tbody></table>
+      <div class="tip">本金與利率請到「家庭／設定 → 編輯固定項目」填寫；勾「寬限」表示目前只繳利息。</div></section>
+    <section><h2>提前還款試算</h2>
+      <div class="calc"><label>選擇貸款<select id="calcDebt" onchange="renderCalc()"></select></label><label>每月多還<input type="number" id="calcExtra" value="5000" onchange="renderCalc()"></label></div>
+      <div class="res" id="calcRes"></div></section>
+  </div>
+
+  <div class="page" id="p2">
+    <section><h2>罰單分期計劃</h2><div id="planInfo" class="res" style="margin-bottom:8px"></div>
+      <div class="calc">
+        <label>範圍<select id="plScope"><option value="enforce">強執＋需到案（未繳）</option><option value="all">全部未繳罰單</option></select></label>
+        <label>起始月份<input type="month" id="plStart"></label><label>分幾期<input type="number" id="plN" value="6" min="1" max="60"></label>
+        <label>每月幾號繳<input type="number" id="plDay" value="15" min="0" max="31"></label><label>負擔人<select id="plOwner"></select></label>
+      </div>
+      <div class="footer"><button class="btn" onclick="createPlan()">建立／重新計算</button><button class="btn gray" onclick="stopPlan()">停用</button><button class="btn green" onclick="closePlan()">分期已繳完 → 結案</button></div>
+      <div class="tip">建立後每月待辦自動出現「罰單分期 第 n/N 期」；實際金額以執行署核准為準，可在待辦列修改。</div></section>
+    <section><h2>交通罰單清單 <button class="btn sm" onclick="addFine()">＋ 新增</button></h2>
+      <div class="filter"><button class="on" onclick="setFilter('all',this)">全部</button><button onclick="setFilter('unpaid',this)">未繳</button><button onclick="setFilter('online',this)">可線上</button><button onclick="setFilter('enforce',this)">強執／需到案</button><button onclick="setFilter('paid',this)">已繳</button></div>
+      <table><thead><tr><th style="width:34px"></th><th style="width:80px">違規日</th><th>事由</th><th style="width:78px">類別</th><th class="r" style="width:80px">罰鍰</th><th class="hide-m" style="width:80px">到案日</th><th style="width:36px"></th></tr></thead><tbody id="fineBody"></tbody></table>
+      <div class="tip">勾選＝在目前月份一次繳清。已納入分期的罰單請勿再逐筆勾選。</div></section>
+  </div>
+
+  <div class="page" id="p3">
+    <section><h2>過去 12 個月：實繳 vs 收入</h2><canvas id="ch1" width="900" height="280"></canvas></section>
+    <section><h2>未來 12 個月：預估總債務</h2><canvas id="ch2" width="900" height="280"></canvas><div class="tip">依目前月付、利率與罰單分期推算；寬限期貸款本金不變。</div></section>
+  </div>
+
+  <div class="page" id="p4">
+    <section><h2>各月紀錄</h2><table><thead><tr><th>月份</th><th class="r">收入</th><th class="r">實繳</th><th class="r">罰單</th><th class="r">結餘</th><th class="hide-m">備註</th></tr></thead><tbody id="histBody"></tbody></table></section>
+  </div>
+
+  <div class="page" id="p5">
+    <section><h2>☁️ 雲端同步（Google 試算表） <span class="tag" id="syncInfo"></span></h2>
+      <label style="font-size:13px">Apps Script 網頁應用程式網址<input type="text" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec"></label>
+      <label style="font-size:13px;display:block;margin-top:6px">家庭密碼（需與程式碼中的 TOKEN 相同）<input type="text" id="gsToken"></label>
+      <div class="footer"><button class="btn green" onclick="connect()">儲存並連線</button><button class="btn" onclick="pull(false)">立即同步</button><button class="btn gray" onclick="forcePush()">本機 → 覆蓋雲端</button><button class="btn gray" onclick="forcePull()">雲端 → 覆蓋本機</button><button class="btn red" onclick="disconnect()">中斷</button></div>
+      <details style="margin-top:10px"><summary>📋 第一次設定：步驟與 Apps Script 程式碼</summary>
+        <ol>
+          <li>瀏覽器開 <b>sheets.new</b> 建立新試算表，命名「家庭還款」。</li>
+          <li>上方選單「擴充功能」→「Apps Script」，刪掉原有內容，貼上下方程式碼，把第一行 <b>TOKEN</b> 改成你們家的密碼，按儲存。</li>
+          <li>右上「部署」→「新增部署作業」→ 齒輪選「網頁應用程式」→ 執行身分「<b>我</b>」→ 具有存取權的使用者「<b>所有人</b>」→ 部署 → 完成 Google 授權。</li>
+          <li>複製出現的「網頁應用程式網址」（結尾 /exec）貼到上方欄位，密碼填相同，按「儲存並連線」。</li>
+          <li>其他家人用手機開同一個 App 網址，填同樣的網址與密碼即可同步；也可以直接打開試算表的「總覽」分頁看資料。</li>
+        </ol>
+        <div class="tip">⚠️ 之後若修改 Apps Script，需「部署 → 管理部署作業 → 編輯 → 版本：新版本」才會生效。同步採「最後存檔者為準」，請避免兩人在同一分鐘內同時改同一筆。</div>
+        <textarea id="gas" readonly style="min-height:200px;font-family:monospace;font-size:11px;margin-top:8px"></textarea>
+        <div class="footer"><button class="btn gray" onclick="copyGas()">複製程式碼</button></div>
+      </details></section>
+    <section><h2>👨‍👩‍👧 家庭成員 <button class="btn sm" onclick="addMember()">＋ 新增</button></h2>
+      <table><tbody id="memBody"></tbody></table>
+      <div class="tip">改名會同步更新所有項目的負擔人與歷史紀錄。「共同」為固定選項，表示尚未指定由誰負擔。</div></section>
+    <section><h2>🔒 PIN 鎖（此裝置）</h2><div id="pinInfo" class="res" style="margin-bottom:8px"></div>
+      <div class="footer"><button class="btn" onclick="setPin()">設定／變更 PIN</button><button class="btn red" onclick="removePin()">移除 PIN</button></div>
+      <div class="tip">離開超過 1 分鐘後需重新輸入。PIN 只存在此裝置，各人可設不同 PIN。</div></section>
+    <section><h2>✏️ 編輯固定項目</h2>
+      <h3>收入 <button class="btn sm" onclick="addItem('income')">＋</button></h3>
+      <table><thead><tr><th>名稱</th><th style="width:100px">預設金額</th><th style="width:60px">日</th><th style="width:100px">負擔人</th><th style="width:36px"></th></tr></thead><tbody id="edInc"></tbody></table>
+      <h3>貸款／債務 <button class="btn sm" onclick="addItem('debt')">＋</button></h3>
+      <table><thead><tr><th>名稱</th><th style="width:95px">月付</th><th style="width:54px">日</th><th style="width:90px">負擔人</th><th style="width:105px">剩餘本金</th><th style="width:66px">利率%</th><th style="width:46px">寬限</th><th style="width:36px"></th></tr></thead><tbody id="edDebt"></tbody></table>
+      <h3>固定支出 <button class="btn sm" onclick="addItem('expense')">＋</button></h3>
+      <table><thead><tr><th>名稱</th><th style="width:100px">預設金額</th><th style="width:60px">日</th><th style="width:100px">負擔人</th><th style="width:36px"></th></tr></thead><tbody id="edExp"></tbody></table>
+      <div class="tip">「日」＝每月幾號繳款（0＝未設定）。</div></section>
+    <section><h2>💾 備份</h2>
+      <div class="footer"><button class="btn green" onclick="exportData()">匯出 JSON</button><label class="btn gray">匯入 JSON<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label><button class="btn red" onclick="if(confirm('確定清空此裝置資料？（雲端不受影響）'))localStorage.removeItem(KEY)||location.reload()">清空本機</button></div>
+      <div class="tip"><b>手機安裝：</b>iPhone Safari → 分享 → 加入主畫面；Android Chrome → 選單 → 加到主畫面。</div></section>
+  </div>
+</main>
+
+<script>
+const KEY='repaymentPlanV4',OLD3='repaymentPlanV3',OLD2='repaymentPlanV2',SK='rpSyncV4',PLAN='fineplan',SHARED='共同';
+const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+const nowMonth=new Date().toISOString().slice(0,7),todayD=new Date().getDate();
+const mk=(kind,name,amt,day,owner,x={})=>({id:uid(),kind,name,amt,day,owner,principal:0,rate:0,io:false,...x});
+const F=(d,desc,amt,type,due)=>({id:uid(),date:d,desc,amt,type,due,paidMonth:null});
+const defaultFines=()=>[
+  F('2026-10-11','未依規定使用方向燈',1200,'online','2026-12-06'),F('2026-08-11','禁止臨時停車處停車',1000,'online','2026-10-02'),
+  F('2026-06-03','路邊停車費催繳未繳',300,'online','2026-10-01'),F('2026-01-04','超速 20 公里以內',2000,'online','2026-02-21'),
+  F('2025-10-10','快速公路超速 20 公里以內',4500,'online','2025-11-28'),F('2025-06-29','不遵守標線指示',1200,'online','2025-10-05'),
+  F('2025-01-12','不遵守標誌指示',1200,'online','2025-04-20'),F('2024-03-01','路邊停車費催繳未繳',300,'online','2024-06-26'),
+  F('2024-02-26','路邊停車費催繳未繳',300,'online','2024-06-26'),F('2024-02-06','未依規定使用方向燈',1200,'online','2024-05-27'),
+  F('2024-02-06','未依規定使用方向燈（第2筆）',1200,'online','2024-05-27'),F('2025-08-31','多車道右轉未先駛入外側車道',900,'enforce','2025-10-19'),
+  F('2025-08-29','超速 20 公里以內（區間）',2000,'enforce','2025-10-20'),F('2025-08-07','闖紅燈',2700,'enforce','2025-09-26'),
+  F('2025-08-03','超速 20 公里以內',2000,'enforce','2025-09-22'),F('2025-06-22','禁止臨時停車處停車',1200,'enforce','2025-08-14'),
+  F('2025-06-22','超速 20～40 公里',2300,'enforce','2025-08-11'),F('2025-06-01','超速 20 公里以內',2000,'enforce','2025-07-27'),
+  F('2025-05-27','不依規定駛入來車道',1200,'enforce','2025-06-26'),F('2025-02-27','高速公路未保持安全距離',4500,'enforce','2025-05-26'),
+  F('2025-02-04','超速 20 公里以內（區間）',1500,'enforce','2025-04-03'),F('2025-01-09','禁止臨時停車處停車',1200,'enforce','2025-03-01'),
+  F('2024-02-06','不暫停讓行人先行通過',6000,'court','2024-05-27')];
+const defaultData=()=>({items:[
+  mk('income','FAYE 薪水',50000,5,'FAYE'),mk('income','其餘家庭薪水',60000,5,'家人'),mk('income','母親分擔（木柵房貸）',36000,1,'母親'),
+  mk('debt','房貸',39276,0,SHARED),mk('debt','車貸',19942,0,SHARED),mk('debt','木柵房貸',58000,0,SHARED),mk('debt','中國信託信貸',9000,0,'FAYE'),
+  mk('expense','電費',2750,0,SHARED),mk('expense','水費',310,0,SHARED),mk('expense','瓦斯費',350,0,SHARED),mk('expense','小朋友棒球費',1500,0,SHARED),
+  mk('expense','管理費',3100,0,SHARED),mk('expense','停車費',3000,0,SHARED),mk('expense','生活費（伙食／交通／其他）',0,0,SHARED)],
+  fines:defaultFines(),months:{},members:['FAYE','家人','母親'],finePlan:null,updatedAt:0});
+const guessOwner=n=>/FAYE/i.test(n)?'FAYE':/母親/.test(n)?'母親':/其餘|家庭/.test(n)?'家人':SHARED;
+function migrate2(o){const inc=o.income.map(r=>mk('income',r.name,r.amt,0,guessOwner(r.name)));const deb=o.debts.map(r=>mk('debt',r.name,r.pay,0,guessOwner(r.name),{principal:r.principal||0,rate:r.rate||0}));const exp=o.expenses.map(r=>mk('expense',r.name,r.amt,0,SHARED));const months={};
+  Object.entries(o.months||{}).forEach(([k,v])=>{const e={};(v.debts||[]).forEach((p,i)=>{if(p&&deb[i])e[deb[i].id]={paid:true,amt:null}});(v.expenses||[]).forEach((p,i)=>{if(p&&exp[i])e[exp[i].id]={paid:true,amt:null}});months[k]={e,note:v.note||''}});
+  return{items:[...inc,...deb,...exp],fines:(o.fines||defaultFines()).map(f=>({id:uid(),...f})),months}}
+function normalize(d){d.items=d.items||[];d.fines=d.fines||[];d.months=d.months||{};if(d.finePlan===undefined)d.finePlan=null;d.updatedAt=d.updatedAt||0;
+  d.items.forEach(i=>{if(!i.owner)i.owner=SHARED});
+  if(!d.members){d.members=[...new Set(d.items.map(i=>i.owner).filter(o=>o&&o!==SHARED))];if(d.finePlan&&d.finePlan.owner&&d.finePlan.owner!==SHARED&&!d.members.includes(d.finePlan.owner))d.members.push(d.finePlan.owner)}
+  return d}
+// 裝置設定（不同步）
+let cfg=JSON.parse(localStorage.getItem(SK)||'{}');cfg.url=cfg.url||'';cfg.token=cfg.token||'';cfg.me=cfg.me||'';cfg.pinHash=cfg.pinHash||'';
+const saveCfg=()=>localStorage.setItem(SK,JSON.stringify(cfg));
+let data=JSON.parse(localStorage.getItem(KEY));
+if(!data){const o3=JSON.parse(localStorage.getItem(OLD3)),o2=JSON.parse(localStorage.getItem(OLD2));data=o3||(o2?migrate2(o2):defaultData());if(o3&&o3.settings&&o3.settings.pinHash&&!cfg.pinHash){cfg.pinHash=o3.settings.pinHash;saveCfg()}}
+normalize(data);localStorage.setItem(KEY,JSON.stringify(data));
+let filter='all';
+const $=id=>document.getElementById(id);
+$('month').value=nowMonth;$('plStart').value=nowMonth;$('gsUrl').value=cfg.url;$('gsToken').value=cfg.token;
+const fmt=n=>Math.round(n).toLocaleString('zh-Hant-TW');
+const curM=()=>$('month').value||nowMonth;
+const roc=iso=>{if(!iso)return'';const[y,m,d]=iso.split('-');return(+y-1911)+'/'+(+m)+(d?'/'+(+d):'')};
+const addM=(m,n)=>{const[y,mo]=m.split('-').map(Number);const d=new Date(y,mo-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const diffM=(a,b)=>{const[y1,m1]=a.split('-').map(Number),[y2,m2]=b.split('-').map(Number);return(y2-y1)*12+(m2-m1)};
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const typeTag={online:'線上',enforce:'強執',court:'需到案'};
+const timeStr=t=>new Date(t).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+function M(m){m=m||curM();data.months[m]=data.months[m]||{e:{},note:''};data.months[m].e=data.months[m].e||{};return data.months[m]}
+const rec=(id,m)=>(data.months[m]&&data.months[m].e&&data.months[m].e[id])||{paid:false,amt:null};
+const eff=(it,m)=>{const r=rec(it.id,m);return r.amt==null?it.amt:r.amt};
+const byKind=k=>data.items.filter(i=>i.kind===k);
+const item=id=>data.items.find(i=>i.id===id);
+function save(){data.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(data));render();schedulePush()}
+function shiftMonth(n){$('month').value=addM(curM(),n);render()}
+function tab(i,btn){document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.page').forEach((p,k)=>p.classList.toggle('on',k===i));if(i===3)renderTrend()}
+function setFilter(f,btn){filter=f;document.querySelectorAll('.filter button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');render()}
+
+// ---- 雲端同步（Google 試算表 / Apps Script）----
+let pushT=null;
+function setSync(t,c){const e=$('sync');e.textContent=t;e.className='sync '+(c||'')}
+const stamp=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+function adopt(d){data=normalize(d);localStorage.setItem(KEY,JSON.stringify(data));render()}
+async function fetchCloud(){const r=await fetch(cfg.url+'?token='+encodeURIComponent(cfg.token)+'&_='+Date.now());const j=await r.json();if(j.error)throw new Error(j.error==='token'?'家庭密碼錯誤':j.error);return j.data}
+async function push(){if(!cfg.url)return;try{setSync('上傳中…','busy');const r=await fetch(cfg.url,{method:'POST',body:JSON.stringify({token:cfg.token,data})});const j=await r.json();if(j.error)throw new Error(j.error);setSync('已同步 '+stamp(),'ok')}catch(e){setSync('上傳失敗','err')}}
+function schedulePush(){if(!cfg.url)return;clearTimeout(pushT);pushT=setTimeout(push,1500)}
+async function pull(silent){if(!cfg.url){setSync('未連線','');return}
+  try{setSync('同步中…','busy');const c=await fetchCloud();
+    if(c&&(c.updatedAt||0)>(data.updatedAt||0))adopt(c);else if(!c||(data.updatedAt||0)>(c.updatedAt||0))await push();
+    setSync('已同步 '+stamp(),'ok');if(!silent)alert('同步完成')}
+  catch(e){setSync('同步失敗','err');if(!silent)alert('連線失敗：'+e.message+'\n請確認網址（結尾 /exec）、密碼，以及 Apps Script 已部署為「所有人」可存取。')}}
+function connect(){cfg.url=$('gsUrl').value.trim();cfg.token=$('gsToken').value.trim();saveCfg();if(!cfg.url)return alert('請填網址');pull(false)}
+function disconnect(){if(!confirm('中斷雲端同步？本機資料保留。'))return;cfg.url='';cfg.token='';saveCfg();$('gsUrl').value='';$('gsToken').value='';setSync('未連線','');render()}
+async function forcePush(){if(!cfg.url)return alert('尚未連線');if(!confirm('以本機資料覆蓋雲端？'))return;data.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(data));await push()}
+async function forcePull(){if(!cfg.url)return alert('尚未連線');if(!confirm('以雲端資料覆蓋本機？'))return;try{const c=await fetchCloud();if(!c)return alert('雲端尚無資料');adopt(c);setSync('已同步 '+stamp(),'ok')}catch(e){alert('失敗：'+e.message)}}
+setInterval(()=>{if(!document.hidden&&cfg.url)pull(true)},30000);
+const GAS=`var TOKEN = '請改成你們家的密碼';
+var SS = SpreadsheetApp.getActiveSpreadsheet();
+function sh(n){ return SS.getSheetByName(n) || SS.insertSheet(n); }
+function out(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function readDB(){ var s = sh('DB'); if (s.getLastRow() === 0) return null; return s.getRange(1,1,s.getLastRow(),1).getValues().map(function(r){return r[0];}).join(''); }
+function doGet(e){ if (e.parameter.token !== TOKEN) return out({error:'token'}); var raw = readDB(); return out({data: raw ? JSON.parse(raw) : null}); }
+function doPost(e){
+  var b = JSON.parse(e.postData.contents); if (b.token !== TOKEN) return out({error:'token'});
+  var raw = JSON.stringify(b.data), s = sh('DB'), rows = [];
+  for (var i = 0; i < raw.length; i += 40000) rows.push([raw.substr(i, 40000)]);
+  s.clear(); s.getRange(1,1,rows.length,1).setValues(rows); writeView(b.data); return out({ok:true});
+}
+function writeView(d){
+  var s = sh('總覽'); s.clear(); var kind = {income:'收入', debt:'貸款', expense:'支出'};
+  var rows = [['類別','名稱','金額','繳款日','負擔人','剩餘本金','利率%']];
+  (d.items||[]).forEach(function(i){ rows.push([kind[i.kind]||i.kind, i.name, i.amt, i.day, i.owner, i.principal||'', i.rate||'']); });
+  rows.push(['','','','','','','']); rows.push(['罰單違規日','事由','金額','類別','到案日','狀態','']);
+  (d.fines||[]).forEach(function(f){ rows.push([f.date, f.desc, f.amt, f.type, f.due, f.paidMonth||'未繳', '']); });
+  rows.push(['','','','','','','']); rows.push(['最後更新', new Date(d.updatedAt||0).toLocaleString('zh-TW'), '', '', '', '', '']);
+  s.getRange(1,1,rows.length,7).setValues(rows);
+}`;
+$('gas').value=GAS.replace(/\n  /g,'\n');
+function copyGas(){$('gas').select();navigator.clipboard?navigator.clipboard.writeText($('gas').value).then(()=>alert('已複製')):document.execCommand('copy')}
+
+// ---- 成員 ----
+function setMe(v){cfg.me=v;saveCfg();render()}
+function addMember(){const n=(prompt('新成員名稱')||'').trim();if(!n)return;if(n===SHARED||data.members.includes(n))return alert('名稱重複');data.members.push(n);save()}
+function renameMember(old){const n=(prompt('將「'+old+'」改名為：',old)||'').trim();if(!n||n===old)return;if(n===SHARED||data.members.includes(n))return alert('名稱重複');
+  data.members=data.members.map(x=>x===old?n:x);data.items.forEach(i=>{if(i.owner===old)i.owner=n});if(data.finePlan&&data.finePlan.owner===old)data.finePlan.owner=n;
+  Object.values(data.months).forEach(mo=>Object.values(mo.e||{}).forEach(r=>{if(r.by===old)r.by=n}));if(cfg.me===old){cfg.me=n;saveCfg()}save()}
+function delMember(nm){if(!confirm('移除「'+nm+'」？其負擔項目會改為「共同」。'))return;data.members=data.members.filter(x=>x!==nm);data.items.forEach(i=>{if(i.owner===nm)i.owner=SHARED});if(data.finePlan&&data.finePlan.owner===nm)data.finePlan.owner=SHARED;if(cfg.me===nm){cfg.me='';saveCfg()}save()}
+const ownerSel=(v,on)=>`<select onchange="${on}">${[...data.members,SHARED].map(o=>`<option value="${esc(o)}" ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+
+// ---- PIN ----
+const hash=s=>{let h=5381;for(const c of s)h=((h<<5)+h+c.charCodeAt(0))|0;return'h'+(h>>>0).toString(36)};
+function lock(){if(!cfg.pinHash)return;$('lock').style.display='flex';$('pinIn').value='';$('pinErr').textContent='';setTimeout(()=>$('pinIn').focus(),50)}
+function unlock(){if(hash($('pinIn').value)===cfg.pinHash)$('lock').style.display='none';else{$('pinErr').textContent='PIN 錯誤';$('pinIn').value=''}}
+function setPin(){if(cfg.pinHash){const c=prompt('請輸入目前 PIN');if(c===null)return;if(hash(c)!==cfg.pinHash)return alert('PIN 錯誤')}
+  const p=prompt('設定新 PIN（4～6 位數字）');if(p===null)return;if(!/^\d{4,6}$/.test(p))return alert('需 4～6 位數字');if(prompt('再輸入一次確認')!==p)return alert('兩次不一致');cfg.pinHash=hash(p);saveCfg();render();alert('PIN 已設定')}
+function removePin(){if(!cfg.pinHash)return alert('未設定 PIN');const c=prompt('請輸入目前 PIN');if(c===null)return;if(hash(c)!==cfg.pinHash)return alert('PIN 錯誤');cfg.pinHash='';saveCfg();render()}
+let hiddenAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else{if(cfg.pinHash&&Date.now()-hiddenAt>60000)lock();if(cfg.url)pull(true)}});
+
+// ---- 罰單分期 ----
+const plan=()=>data.finePlan;
+function planIdx(m,any=false){const p=plan();if(!p||(!any&&!p.enabled))return-1;const k=diffM(p.start,m);return k>=0&&k<p.n?k:-1}
+function planItem(m){const k=planIdx(m);if(k<0)return null;const p=plan();return{id:PLAN,kind:'fine',name:`罰單分期 第 ${k+1}/${p.n} 期`,amt:p.per,day:p.day,owner:p.owner}}
+function planPaid(m){const p=plan();if(!p||planIdx(m,true)<0)return 0;const r=rec(PLAN,m);return r.paid?(r.amt==null?p.per:r.amt):0}
+function planPaidTotal(){const p=plan();if(!p)return 0;let s=0;for(let k=0;k<p.n;k++)s+=planPaid(addM(p.start,k));return s}
+function planPaidCount(){const p=plan();if(!p)return 0;let c=0;for(let k=0;k<p.n;k++)if(rec(PLAN,addM(p.start,k)).paid)c++;return c}
+const inScope=(f,scope)=>!f.paidMonth&&(scope==='all'||f.type!=='online');
+function createPlan(){const scope=$('plScope').value,start=$('plStart').value||nowMonth,n=Math.max(1,Number($('plN').value)||6),day=Number($('plDay').value)||0,owner=$('plOwner').value||SHARED;
+  const total=data.fines.filter(f=>inScope(f,scope)).reduce((s,f)=>s+f.amt,0);if(!total)return alert('沒有符合條件的未繳罰單');
+  if(plan()&&plan().enabled&&!confirm('已有分期計劃，重新計算會重排金額，已勾選紀錄保留。繼續？'))return;
+  data.finePlan={enabled:true,scope,start,n,day,owner,total,per:Math.ceil(total/n)};save();alert(`已建立：共 ${fmt(total)} 元，分 ${n} 期，每月 ${fmt(data.finePlan.per)} 元`)}
+function stopPlan(){if(!plan()||!plan().enabled)return alert('沒有啟用中的計劃');if(!confirm('停用分期計劃？已繳紀錄保留。'))return;plan().enabled=false;save()}
+function closePlan(){const p=plan();if(!p||!p.enabled)return alert('沒有啟用中的計劃');if(!confirm(`將範圍內罰單全部標為「分期繳清」並結束計劃（已繳 ${planPaidCount()}/${p.n} 期）。確定？`))return;
+  data.fines.forEach(f=>{if(inScope(f,p.scope))f.paidMonth='分期'});p.enabled=false;p.closed=true;save()}
+
+// ---- 編輯 ----
+function addItem(kind){data.items.push(mk(kind,'',0,0,SHARED));save()}
+function delItem(id){if(!confirm('刪除此項目？'))return;data.items=data.items.filter(i=>i.id!==id);save()}
+function updItem(id,f,v){const it=item(id);if(!it)return;it[f]=(f==='name'||f==='owner')?v:f==='io'?!!v:Number(v)||0;save()}
+function setOverride(id,v){const r=M().e[id]||{paid:false,amt:null};r.amt=v===''?null:Number(v)||0;M().e[id]=r;save()}
+function togglePaid(id,chk){const r=M().e[id]||{paid:false,amt:null};r.paid=chk;r.by=chk?(cfg.me||''):'';r.at=chk?Date.now():0;M().e[id]=r;
+  const it=item(id);if(it&&it.kind==='debt'&&it.principal>0&&!it.io){const toP=Math.max(0,eff(it,curM())-it.principal*it.rate/1200);it.principal=Math.max(0,it.principal+(chk?-toP:toP))}save()}
+function setNote(v){M().note=v;save()}
+function addFine(){data.fines.push(F(nowMonth+'-01','',0,'online',''));save()}
+function delFine(id){if(!confirm('刪除此罰單？'))return;data.fines=data.fines.filter(f=>f.id!==id);save()}
+function updFine(id,f,v){const x=data.fines.find(f=>f.id===id);x[f]=f==='amt'?Number(v)||0:v;save()}
+function toggleFine(id,chk){data.fines.find(f=>f.id===id).paidMonth=chk?curM():null;save()}
+
+// ---- 計算 ----
+const outsFor=m=>[...byKind('debt'),...byKind('expense'),planItem(m)].filter(Boolean).sort((a,b)=>(a.day||99)-(b.day||99));
+function monthTotals(m){const inc=byKind('income').reduce((s,i)=>s+eff(i,m),0);const outs=[...byKind('debt'),...byKind('expense')];
+  const due=outs.reduce((s,i)=>s+eff(i,m),0),paid=outs.reduce((s,i)=>s+(rec(i.id,m).paid?eff(i,m):0),0);
+  const pi=planItem(m),planDue=pi?eff(pi,m):0,pp=planPaid(m);const fines=data.fines.filter(f=>f.paidMonth===m).reduce((s,f)=>s+f.amt,0)+pp;
+  return{inc,due,paid,fines,planDue,planPaid:pp}}
+function fineLeft(){const tot=data.fines.reduce((s,f)=>s+f.amt,0),ind=data.fines.filter(f=>f.paidMonth).reduce((s,f)=>s+f.amt,0);const pp=plan()&&plan().enabled?planPaidTotal():0;return{tot,left:Math.max(0,tot-ind-pp)}}
+function amort(P,rate,pay,extra=0,io=false){const i=rate/1200;let n=0,tot=0;if(P<=0)return{n:0,tot:0};if(io)return{n:Infinity,tot:Infinity};
+  while(P>0.5&&n<600){const it=P*i;tot+=it;P=P+it-(pay+extra);n++;if(pay+extra<=it)return{n:Infinity,tot:Infinity}}return{n,tot}}
+const dayCls=(d,m)=>{if(!d||m!==nowMonth)return'';if(d<todayD)return'late';if(d-todayD<=3)return'soon';return''};
+const ownerOf=i=>i.owner||SHARED;
+
+// ---- LINE 月報 ----
+function buildReport(){const m=curM(),t=monthTotals(m),fl=fineLeft(),outs=outsFor(m),unpaid=outs.filter(i=>!rec(i.id,m).paid);
+  const due=t.due+t.planDue,paidAll=t.paid+t.planPaid,bal=t.inc-t.paid-t.fines,principal=byKind('debt').reduce((s,d)=>s+d.principal,0);
+  const L=[`【家庭還款月報 ${roc(m)}】`,`收入：${fmt(t.inc)}`,`固定應繳：${fmt(due)}｜已繳 ${fmt(paidAll)}（${due?Math.round(paidAll/due*100):0}%）`,`罰單本月繳：${fmt(t.fines)}｜尚欠 ${fmt(fl.left)}`,`本月結餘：${bal>=0?'+':'−'}${fmt(Math.abs(bal))}`,''];
+  L.push(unpaid.length?`▶ 未繳 ${unpaid.length} 筆，共 ${fmt(unpaid.reduce((s,i)=>s+eff(i,m),0))}：`:'▶ 本月款項已全部繳清 🎉');
+  unpaid.forEach(i=>L.push(`　・${i.name} ${fmt(eff(i,m))}${i.day?'（'+i.day+'日）':''}［${ownerOf(i)}］`));
+  L.push('','▶ 分攤：');[...data.members,SHARED].forEach(o=>{const inc=byKind('income').filter(i=>ownerOf(i)===o).reduce((s,i)=>s+eff(i,m),0),out=outs.filter(i=>ownerOf(i)===o).reduce((s,i)=>s+eff(i,m),0);if(!inc&&!out)return;const n=inc-out;L.push(`　・${o}：收 ${fmt(inc)}／付 ${fmt(out)}／淨 ${n>=0?'+':'−'}${fmt(Math.abs(n))}`)});
+  if(plan()&&plan().enabled)L.push('',`▶ 罰單分期：已繳 ${planPaidCount()}/${plan().n} 期，每期 ${fmt(plan().per)}`);
+  L.push('',`總債務（本金＋罰單）：${fmt(principal+fl.left)}`);const note=(data.months[m]||{}).note;if(note)L.push(`備註：${note}`);return L.join('\n')}
+function makeReport(){$('report').value=buildReport();$('lineLink').href='https://line.me/R/share?text='+encodeURIComponent($('report').value);if(navigator.share)$('shareBtn').style.display=''}
+function ensureReport(){if(!$('report').value)makeReport();return $('report').value}
+function copyReport(){const t=ensureReport();if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('已複製，可貼到 LINE'));else{$('report').select();document.execCommand('copy');alert('已複製')}}
+function openLine(){ensureReport();$('lineLink').href='https://line.me/R/share?text='+encodeURIComponent($('report').value);return true}
+function shareReport(){navigator.share({title:'家庭還款月報',text:ensureReport()}).catch(()=>{})}
+
+// ---- render ----
+function render(){
+  const m=curM(),mm=M(m),t=monthTotals(m),fl=fineLeft(),p=plan(),me=cfg.me,mine=$('mineOnly').checked&&me;
+  const due=t.due+t.planDue,paidAll=t.paid+t.planPaid,bal=t.inc-due,principal=byKind('debt').reduce((s,d)=>s+d.principal,0);
+  $('cInc').textContent=fmt(t.inc);$('cDue').textContent=fmt(due);
+  $('cBal').textContent=(bal>=0?'+':'−')+fmt(Math.abs(bal));$('cBal').className='val '+(bal>=0?'pos':'neg');
+  $('cPaid').textContent=fmt(paidAll)+' / '+fmt(due);$('cBar').style.width=(due?paidAll/due*100:0)+'%';
+  $('cFine').textContent=fmt(fl.left);$('fBar').style.width=(fl.tot?(fl.tot-fl.left)/fl.tot*100:0)+'%';
+  $('cTotal').textContent=fmt(principal+fl.left);$('note').value=mm.note||'';
+  $('lockBtn').style.display=cfg.pinHash?'':'none';$('pinInfo').textContent=cfg.pinHash?'🔒 此裝置已啟用 PIN':'🔓 尚未設定 PIN';
+  $('syncInfo').textContent=cfg.url?'已設定':'未設定';$('syncInfo').className='tag '+(cfg.url?'o':'');
+  $('meSel').innerHTML=`<option value="">（請選擇）</option>`+data.members.map(o=>`<option value="${esc(o)}" ${o===me?'selected':''}>${esc(o)}</option>`).join('');
+  $('plOwner').innerHTML=[...data.members,SHARED].map(o=>`<option value="${esc(o)}" ${(p?p.owner:me)===o?'selected':''}>${esc(o)}</option>`).join('');
+  $('memBody').innerHTML=data.members.map(o=>`<tr><td><span class="own ${o===me?'me':''}">${esc(o)}</span>${o===me?' <small style="color:#166534">（我）</small>':''}</td><td class="r"><button class="btn sm gray" onclick="renameMember('${esc(o)}')">改名</button> <button class="btn sm red" onclick="delMember('${esc(o)}')">移除</button></td></tr>`).join('')||'<tr><td style="color:#999">尚無成員</td></tr>';
+  const own=o=>`<span class="own ${o===me?'me':''}">${esc(o)}</span>`;
+
+  $('planInfo').innerHTML=!p?'尚未建立分期計劃。':p.enabled?`<b>啟用中</b>：${p.scope==='all'?'全部未繳罰單':'強執＋需到案'}，總額 ${fmt(p.total)}，分 ${p.n} 期，每期 <b>${fmt(p.per)}</b>，自 ${roc(p.start)} 起每月 ${p.day||'—'} 日，負擔人 ${esc(p.owner)}<br>已繳 <b>${planPaidCount()}/${p.n}</b> 期，累計 ${fmt(planPaidTotal())}，尚欠 ${fmt(Math.max(0,p.total-planPaidTotal()))}`:p.closed?'上一個計劃已結案，可重新建立。':'計劃已停用（紀錄保留），可重新建立。';
+
+  let al='';const today=new Date().toISOString().slice(0,10);
+  const outsAll=outsFor(m),outs=mine?outsAll.filter(i=>ownerOf(i)===me):outsAll,unpaid=outs.filter(i=>!rec(i.id,m).paid),done=outs.filter(i=>rec(i.id,m).paid);
+  if(!me)al+=`<div class="alert blue">👤 請在上方選擇「我是誰」，勾選已繳時才會記錄是誰繳的。</div>`;
+  if(!cfg.url)al+=`<div class="alert blue">☁️ 尚未連線雲端，資料只在此裝置。到「家庭／設定」完成 Google 試算表同步，全家才能共用。</div>`;
+  if(m===nowMonth){const late=unpaid.filter(i=>i.day&&i.day<todayD),soon=unpaid.filter(i=>i.day&&i.day>=todayD&&i.day-todayD<=3);
+    if(late.length)al+=`<div class="alert red">🔴 已過繳款日未勾選：${late.map(i=>esc(i.name)+'（'+i.day+'日）').join('、')}</div>`;
+    if(soon.length)al+=`<div class="alert">⏰ 3 天內到期：${soon.map(i=>esc(i.name)+'（'+i.day+'日）').join('、')}</div>`}
+  const living=byKind('expense').find(i=>i.name.startsWith('生活費'));if(living&&!eff(living,m))al+=`<div class="alert">📝 尚未填「生活費」，結餘只反映固定繳款。</div>`;
+  if(bal<0)al+=`<div class="alert red">🔴 本月支出超過收入 ${fmt(-bal)} 元。</div>`;
+  data.fines.filter(f=>!f.paidMonth&&f.type==='online'&&f.due>=today).forEach(f=>al+=`<div class="alert">⏰ 罰單「${esc(f.desc)}」${fmt(f.amt)} 元，到案日 ${roc(f.due)}，逾期將移送強制執行。</div>`);
+  if(!(p&&p.enabled))data.fines.filter(f=>!f.paidMonth&&f.type==='court').forEach(f=>al+=`<div class="alert">⚠️ 「${esc(f.desc)}」${fmt(f.amt)} 元需親自到案。</div>`);
+  $('alerts').innerHTML=al;
+
+  const kindTag=i=>i.kind==='debt'?' <small style="color:#999">貸款</small>':i.kind==='fine'?' <span class="tag p">罰單分期</span>':'';
+  const row=i=>{const r=rec(i.id,m);return`<tr class="${r.paid?'paid':''}"><td><input type="checkbox" ${r.paid?'checked':''} onchange="togglePaid('${i.id}',this.checked)"></td>
+    <td><span class="day ${dayCls(i.day,m)}">${i.day?i.day+'日':'—'}</span></td>
+    <td><span class="nm">${esc(i.name)||'<i>（未命名）</i>'}</span>${own(ownerOf(i))}${kindTag(i)}${r.paid&&(r.by||r.at)?`<br><small style="color:#888">${esc(r.by||'—')} 於 ${r.at?timeStr(r.at):''} 勾選</small>`:''}</td>
+    <td><input type="number" value="${eff(i,m)}" onchange="setOverride('${i.id}',this.value)" ${r.paid?'disabled':''}></td></tr>`};
+  $('todoBody').innerHTML=unpaid.map(row).join('')||'<tr><td colspan="4" style="color:#1a8f4a">🎉 本月款項已全部繳清</td></tr>';
+  $('todoCnt').textContent=`${unpaid.length} 筆，共 ${fmt(unpaid.reduce((s,i)=>s+eff(i,m),0))}${mine?'（只看我的）':''}`;
+  $('doneBody').innerHTML=done.map(row).join('');$('doneCnt').textContent=`（${done.length} 筆，${fmt(done.reduce((s,i)=>s+eff(i,m),0))}）`;
+  $('incBody').innerHTML=byKind('income').map(i=>`<tr><td>${esc(i.name)}</td><td><input type="number" value="${eff(i,m)}" onchange="setOverride('${i.id}',this.value)"></td><td class="hide-m">${own(ownerOf(i))}</td></tr>`).join('')+`<tr><td><b>合計</b></td><td class="r"><b>${fmt(t.inc)}</b></td><td class="hide-m"></td></tr>`;
+  $('ownerBody').innerHTML=[...data.members,SHARED].map(o=>{const inc=byKind('income').filter(i=>ownerOf(i)===o).reduce((s,i)=>s+eff(i,m),0),out=outsAll.filter(i=>ownerOf(i)===o).reduce((s,i)=>s+eff(i,m),0);if(!inc&&!out)return'';const n=inc-out;return`<tr><td>${own(o)}</td><td class="r">${fmt(inc)}</td><td class="r">${fmt(out)}</td><td class="r ${n>=0?'pos':'neg'}"><b>${n>=0?'+':'−'}${fmt(Math.abs(n))}</b></td></tr>`}).join('');
+
+  const debts=[...byKind('debt')].sort((a,b)=>b.rate-a.rate);
+  $('debtBody').innerHTML=debts.map(d=>{const a=amort(d.principal,d.rate,d.amt,0,d.io);const n=d.principal<=0?'—':a.n===Infinity?'∞':a.n;const date=d.principal<=0?'請填本金':d.io?'寬限中':a.n===Infinity?'月付不足':roc(addM(m,a.n));
+    return`<tr><td>${esc(d.name)}${own(ownerOf(d))}</td><td class="r">${fmt(d.amt)}</td><td class="r">${fmt(d.principal)}</td><td class="r hide-m">${d.rate}</td><td class="r hide-m">${fmt(d.principal*d.rate/1200)}</td><td class="r">${n}</td><td>${date}</td></tr>`}).join('')+
+    `<tr><td><b>合計</b></td><td class="r"><b>${fmt(debts.reduce((s,d)=>s+d.amt,0))}</b></td><td class="r"><b>${fmt(principal)}</b></td><td class="hide-m"></td><td class="r hide-m"><b>${fmt(debts.reduce((s,d)=>s+d.principal*d.rate/1200,0))}</b></td><td colspan="2"></td></tr>`;
+  const sel=$('calcDebt'),prev=sel.value;sel.innerHTML=debts.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');if(debts.some(d=>d.id===prev))sel.value=prev;renderCalc();
+
+  const list=data.fines.filter(f=>filter==='all'||(filter==='unpaid'&&!f.paidMonth)||(filter==='paid'&&f.paidMonth)||(filter==='online'&&f.type==='online'&&!f.paidMonth)||(filter==='enforce'&&f.type!=='online'&&!f.paidMonth));
+  $('fineBody').innerHTML=list.map(f=>`<tr class="${f.paidMonth?'paid':''}"><td><input type="checkbox" ${f.paidMonth?'checked':''} onchange="toggleFine('${f.id}',this.checked)"></td><td>${roc(f.date)}</td>
+    <td><span class="nm">${esc(f.desc)||'<i>（未命名）</i>'}</span>${f.paidMonth?`<br><small>${f.paidMonth==='分期'?'分期繳清':'於 '+f.paidMonth+' 繳清'}</small>`:(p&&p.enabled&&inScope(f,p.scope)?'<br><span class="tag p">分期中</span>':'')}</td>
+    <td><select style="font-size:12px" onchange="updFine('${f.id}','type',this.value)">${Object.entries(typeTag).map(([k,v])=>`<option value="${k}" ${f.type===k?'selected':''}>${v}</option>`).join('')}</select></td>
+    <td><input type="number" value="${f.amt}" onchange="updFine('${f.id}','amt',this.value)"></td><td class="hide-m">${roc(f.due)}</td><td><button class="btn red sm" onclick="delFine('${f.id}')">刪</button></td></tr>`).join('')+
+    `<tr><td colspan="4"><b>此篩選合計（${list.length} 筆）</b></td><td class="r"><b>${fmt(list.reduce((s,f)=>s+f.amt,0))}</b></td><td colspan="2"></td></tr>`;
+
+  const months=new Set(Object.keys(data.months));data.fines.forEach(f=>f.paidMonth&&f.paidMonth!=='分期'&&months.add(f.paidMonth));
+  $('histBody').innerHTML=[...months].sort().reverse().map(k=>{const x=monthTotals(k),r=data.months[k]||{note:''};if(!x.paid&&!x.fines&&!r.note)return'';const b=x.inc-x.paid-x.fines;
+    return`<tr><td><a href="#" onclick="$('month').value='${k}';render();return false">${k}</a></td><td class="r">${fmt(x.inc)}</td><td class="r">${fmt(x.paid)}</td><td class="r">${fmt(x.fines)}</td><td class="r ${b>=0?'pos':'neg'}">${b>=0?'+':'−'}${fmt(Math.abs(b))}</td><td class="hide-m" style="font-size:12px;color:#666">${esc(r.note)}</td></tr>`}).join('')||'<tr><td colspan="6" style="color:#999">尚無紀錄</td></tr>';
+
+  const ed=(i,extra='')=>`<tr><td><input type="text" value="${esc(i.name)}" onchange="updItem('${i.id}','name',this.value)"></td><td><input type="number" value="${i.amt}" onchange="updItem('${i.id}','amt',this.value)"></td><td><input type="number" min="0" max="31" value="${i.day}" onchange="updItem('${i.id}','day',this.value)"></td><td>${ownerSel(ownerOf(i),`updItem('${i.id}','owner',this.value)`)}</td>${extra}<td><button class="btn red sm" onclick="delItem('${i.id}')">刪</button></td></tr>`;
+  $('edInc').innerHTML=byKind('income').map(i=>ed(i)).join('');$('edExp').innerHTML=byKind('expense').map(i=>ed(i)).join('');
+  $('edDebt').innerHTML=byKind('debt').map(i=>ed(i,`<td><input type="number" value="${i.principal}" onchange="updItem('${i.id}','principal',this.value)"></td><td><input type="number" step="0.01" value="${i.rate}" onchange="updItem('${i.id}','rate',this.value)"></td><td style="text-align:center"><input type="checkbox" ${i.io?'checked':''} onchange="updItem('${i.id}','io',this.checked)"></td>`)).join('');
+  if($('report').value)makeReport();if($('p3').classList.contains('on'))renderTrend();
+}
+function renderCalc(){const d=item($('calcDebt').value),extra=Number($('calcExtra').value)||0,el=$('calcRes');
+  if(!d)return el.textContent='尚無貸款';if(d.principal<=0)return el.textContent='請先在「家庭／設定」填入此貸款的剩餘本金與利率。';if(d.io)return el.textContent='此貸款為寬限期，請取消寬限勾選後再試算。';
+  const a=amort(d.principal,d.rate,d.amt),b=amort(d.principal,d.rate,d.amt,extra);if(a.n===Infinity)return el.innerHTML='⚠️ 月付不足以支付利息，本金不會減少。';
+  el.innerHTML=`<b>${esc(d.name)}</b>（本金 ${fmt(d.principal)}，利率 ${d.rate}%）<br>目前月付 ${fmt(d.amt)}：約 <b>${a.n}</b> 期（${roc(addM(curM(),a.n))}），總利息約 ${fmt(a.tot)}<br>每月多還 ${fmt(extra)}：約 <b>${b.n}</b> 期（${roc(addM(curM(),b.n))}），總利息約 ${fmt(b.tot)}<br><span class="pos"><b>提前 ${a.n-b.n} 個月，省利息約 ${fmt(a.tot-b.tot)} 元</b></span>`}
+function chart(cv,labels,series){const c=cv.getContext('2d'),W=cv.width,H=cv.height,pl=70,pr=16,pt=30,pb=34;c.clearRect(0,0,W,H);
+  const all=series.flatMap(s=>s.v);let max=Math.max(1,...all),min=Math.min(0,...all);const st=Math.pow(10,Math.floor(Math.log10(max||1)));max=Math.ceil(max/st)*st;min=Math.floor(min/st)*st;if(max===min)max=min+st;
+  const x=i=>pl+(W-pl-pr)*(i+.5)/labels.length,y=v=>pt+(H-pt-pb)*(1-(v-min)/(max-min));c.font='12px sans-serif';c.strokeStyle='#e5e7eb';c.lineWidth=1;
+  for(let k=0;k<=4;k++){const v=min+(max-min)*k/4;c.fillStyle='#666';c.beginPath();c.moveTo(pl,y(v));c.lineTo(W-pr,y(v));c.stroke();c.textAlign='right';c.fillText(fmt(v),pl-6,y(v)+4)}
+  c.textAlign='center';c.fillStyle='#666';labels.forEach((l,i)=>c.fillText(l,x(i),H-pb+18));const bw=(W-pl-pr)/labels.length*.5;
+  series.forEach(s=>{c.fillStyle=c.strokeStyle=s.color;if(s.type==='bar')s.v.forEach((v,i)=>c.fillRect(x(i)-bw/2,y(Math.max(v,0)),bw,Math.abs(y(v)-y(0))));
+    else{c.lineWidth=2;c.beginPath();s.v.forEach((v,i)=>i?c.lineTo(x(i),y(v)):c.moveTo(x(i),y(v)));c.stroke();s.v.forEach((v,i)=>{c.beginPath();c.arc(x(i),y(v),3.5,0,7);c.fill()})}});
+  let lx=pl;c.textAlign='left';series.forEach(s=>{c.fillStyle=s.color;c.fillRect(lx,8,12,12);c.fillStyle='#333';c.fillText(s.name,lx+16,18);lx+=c.measureText(s.name).width+40})}
+function renderTrend(){const m=curM(),labels=[],paid=[],inc=[];
+  for(let k=-11;k<=0;k++){const mo=addM(m,k);labels.push(mo.slice(2).replace('-','/'));const t=monthTotals(mo);paid.push(t.paid+t.fines);inc.push(t.inc)}
+  chart($('ch1'),labels,[{name:'實繳（含罰單）',v:paid,type:'bar',color:'#2d6cdf'},{name:'收入',v:inc,type:'line',color:'#1a8f4a'}]);
+  let fl=fineLeft().left;const p=plan(),Ps=byKind('debt').map(d=>({P:d.principal,i:d.rate/1200,pay:d.amt,io:d.io})),l2=[],v2=[];
+  for(let k=0;k<=12;k++){const mo=addM(m,k);l2.push(mo.slice(2).replace('-','/'));v2.push(Ps.reduce((s,d)=>s+d.P,0)+fl);Ps.forEach(d=>{if(d.P<=0||d.io)return;d.P=Math.max(0,d.P+d.P*d.i-d.pay)});if(p&&p.enabled&&planIdx(mo)>=0)fl=Math.max(0,fl-p.per)}
+  chart($('ch2'),l2,[{name:'預估總債務（本金＋罰單）',v:v2,type:'line',color:'#d0342c'}])}
+function exportData(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));a.download='家庭還款_'+curM()+'.json';a.click()}
+function importData(inp){const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=e=>{try{const j=JSON.parse(e.target.result);data=normalize(j.items?j:migrate2(j));save();alert('匯入成功')}catch(err){alert('檔案格式錯誤')}};rd.readAsText(f)}
+render();if(cfg.pinHash)lock();if(cfg.url)pull(true);
+</script>
+</body>
+</html>
